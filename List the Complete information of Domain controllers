@@ -1,0 +1,1 @@
+Get-ADDomainController -server “Contosso.com” -filter * | Select-Object Name, Hostname, Domain, Site, IPv4Address, IsReadOnly, IsGlobalCatalog, OperatingSystem, OperationMasterRoles | Export-csv C:\temp\Microfocus_22082023.csv -NoTypeInformation
