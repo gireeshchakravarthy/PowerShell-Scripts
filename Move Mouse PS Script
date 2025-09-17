@@ -1,0 +1,57 @@
+param($sleep = 180) # seconds
+$announcementInterval = 10 # loops
+
+Clear-Host
+
+Write-Output "Starting Show As Active!"
+Write-Host "Executing Print Screen Key-toggle NoSleep routine. Runs every $sleep seconds..."
+Write-Host "Start time:" $(Get-Date -Format "dddd MM/dd HH:mm (K)")
+Write-Output "Press Print Screen Key to quit."
+
+$WShell = New-Object -com "Wscript.Shell"
+$date = Get-Date -Format "dddd MM/dd HH:mm (K)"
+$TimeToQuit = $false
+$Signature = @'
+    [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true, CallingConvention = CallingConvention.Winapi)]
+    public static extern short GetKeyState(int keyCode);
+'@
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -MemberDefinition $Signature -Name Keyboard -Namespace WeakShell
+
+# Some environments don't support invocation of this method.
+try {
+    $stopwatch = [system.diagnostics.stopwatch]::StartNew()
+}
+catch {
+    Write-Host "Couldn't start the stopwatch."
+}
+
+Write-Host "<3" -fore red
+
+$index = 0
+do {
+    #for Key State: https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
+    if ((([int][WeakShell.Keyboard]::GetKeyState(0x2C)) -band 0xffff) -eq 0) {
+        Write-Host "< 3" -fore red      # heartbeat
+        $WShell.sendkeys("{UP}")
+
+        Start-Sleep -Milliseconds 1000
+
+        $WShell.sendkeys("{DOWN}")
+        Write-Host "<3" -fore red       # heartbeat
+
+        # Move mouse
+        $Pos = [System.Windows.Forms.Cursor]::Position; $Pos
+        $random = Get-Random -Minimum -100 -Maximum 100
+        $x = ($pos.X % 500) + $random
+        $y = ($pos.Y % 500) + $random
+        #[System.Windows.Forms.Cursor]::Position = New-Object System.Drawing.Point($x, $y)
+
+        Start-Sleep -Seconds $sleep
+    }
+    else {
+        $TimeToQuit = $true
+        Write-Output "Print Screen Key on, quitting"
+    }
+
+}while ($TimeToQuit -eq $false)
